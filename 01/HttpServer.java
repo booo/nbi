@@ -90,6 +90,7 @@ class Handler implements Runnable {
             }
 
             output.write("HTTP/1.1 200 OK\n".getBytes());
+            output.write(("Content-Length: " + Files.size(path) + "\n").getBytes());
             output.write("\n".getBytes());
 
             BufferedInputStream bufferedInputStream = new BufferedInputStream(Files.newInputStream(path));
