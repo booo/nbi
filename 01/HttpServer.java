@@ -63,8 +63,8 @@ class Handler implements Runnable {
                 return;
             }
 
-            String[] firstLine = lines[0].split(" ");
-            System.out.println(firstLine[0]);
+            String[] firstLine = lines[0].split("\\s");
+
             if(firstLine.length != 3 ||
                     firstLine[0].compareTo("GET") != 0 ||
                     firstLine[2].compareTo("HTTP/1.1") != 0
