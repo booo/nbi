@@ -74,7 +74,7 @@ class Handler implements Runnable {
                         return;
                     }
 
-            String DOCUMENT_ROOT = "./www/";
+            String DOCUMENT_ROOT = "./testpage/";
 
             Path path = Paths.get(DOCUMENT_ROOT + firstLine[1]);
 
