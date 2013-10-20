@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.nio.file.*;
 
 class HttpServer implements Runnable {
 
@@ -51,7 +52,7 @@ class Handler implements Runnable {
             BufferedReader bufferedReader = new BufferedReader(
                     new InputStreamReader(client.getInputStream())
                     );
-            PrintWriter output = new PrintWriter(this.client.getOutputStream(), true);
+            BufferedOutputStream output = new BufferedOutputStream(this.client.getOutputStream());
 
             int count = bufferedReader.read(buffer, 0, 1024);
             String requestString = new String(buffer, 0, count);
@@ -59,7 +60,7 @@ class Handler implements Runnable {
             String[] lines = requestString.split("\n");
 
             if(lines.length < 1) {
-                output.println("HTTP/1.1 400 Bad Request");
+                output.write("HTTP/1.1 400 Bad Request".getBytes());
                 return;
             }
 
@@ -69,11 +70,37 @@ class Handler implements Runnable {
                     firstLine[0].compareTo("GET") != 0 ||
                     firstLine[2].compareTo("HTTP/1.1") != 0
                     ) {
-                        output.println("HTTP/1.1 400 Bad Request");
+                        output.write("HTTP/1.1 400 Bad Request".getBytes());
                         return;
                     }
 
-            output.println("HTTP/1.1 404 Not Found");
+            String DOCUMENT_ROOT = "./www/";
+
+            Path path = Paths.get(DOCUMENT_ROOT + firstLine[1]);
+
+            System.out.println("Requested path: " + path);
+
+            if(Files.exists(path) && Files.isDirectory(path)) {
+                path = Paths.get(DOCUMENT_ROOT + firstLine[1] + "/index.html");
+            }
+
+            if(!Files.exists(path)) {
+                output.write("HTTP/1.1 404 Not Found".getBytes());
+                return;
+            }
+
+            output.write("HTTP/1.1 200 OK\n".getBytes());
+            output.write("\n".getBytes());
+
+            BufferedInputStream bufferedInputStream = new BufferedInputStream(Files.newInputStream(path));
+            int n;
+            byte[] byteBuffer = new byte[1024];
+
+            while((n = bufferedInputStream.read(byteBuffer)) > -1) {
+                output.write(byteBuffer, 0, n);
+            }
+            output.flush();
+
 
         } catch(IOException ex) {
         } finally {
