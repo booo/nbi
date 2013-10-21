@@ -85,7 +85,21 @@ class Handler implements Runnable {
             }
 
             if(!Files.exists(path)) {
-                output.write("HTTP/1.1 404 Not Found".getBytes());
+
+                path = Paths.get("./404.html");
+
+                output.write("HTTP/1.1 404 Not Found\n".getBytes());
+                output.write(("Content-Length: " + Files.size(path) + "\n").getBytes());
+                output.write("\n".getBytes());
+
+                BufferedInputStream bufferedInputStream = new BufferedInputStream(Files.newInputStream(path));
+                int n;
+                byte[] byteBuffer = new byte[1024];
+
+                while((n = bufferedInputStream.read(byteBuffer)) > -1) {
+                    output.write(byteBuffer, 0, n);
+                }
+                output.flush();
                 return;
             }
 
