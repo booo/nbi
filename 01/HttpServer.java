@@ -12,10 +12,14 @@ class HttpServer implements Runnable {
 
     public static void main(String[] args) throws IOException {
         System.out.println("Starting http server...");
+
+        //handle optional argument port
         int port = 80;
         if(args.length == 1) {
             port = Integer.parseInt(args[0]);
         }
+
+        //start main thread that handles incomming connections
         Thread httpServer = new Thread(new HttpServer(port));
         httpServer.start();
     }
@@ -31,6 +35,8 @@ class HttpServer implements Runnable {
             pool = Executors.newCachedThreadPool();
 
             while(true) {
+                //accept incomming connections and pass the socket to the new
+                //thread from the thread pool
                 Socket socket = serverSocket.accept();
                 pool.execute(new Handler(socket));
             }
@@ -58,18 +64,23 @@ class Handler implements Runnable {
                     );
             BufferedOutputStream output = new BufferedOutputStream(this.client.getOutputStream());
 
+            //read request from client
             int count = bufferedReader.read(buffer, 0, 1024);
             String requestString = new String(buffer, 0, count);
 
+            //get line base input
             String[] lines = requestString.split("\n");
 
+            //return bad request if there is no line
             if(lines.length < 1) {
                 output.write("HTTP/1.1 400 Bad Request".getBytes());
                 return;
             }
 
+            //split first line to get path and method
             String[] firstLine = lines[0].split("\\s");
 
+            //only handle get requests and HTTP/1.1 requests
             if(firstLine.length != 3 ||
                     firstLine[0].compareTo("GET") != 0 ||
                     firstLine[2].compareTo("HTTP/1.1") != 0
@@ -78,22 +89,25 @@ class Handler implements Runnable {
                         return;
                     }
 
+            //place your documents here
             String DOCUMENT_ROOT = "./testpage/";
 
             Path path = Paths.get(DOCUMENT_ROOT + firstLine[1]);
 
             System.out.println("Requested path: " + path);
 
+            //if directory is requested change path to default document in this
+            //path
             if(Files.exists(path) && Files.isDirectory(path)) {
                 path = Paths.get(DOCUMENT_ROOT + firstLine[1] + "/index.html");
             }
 
             if(!Files.exists(path)) {
 
+                //if file does not exist return 404 Not Found
                 output.write("HTTP/1.1 404 Not Found\n".getBytes());
-                //output.write(("Content-Length: " + Files.size(path) + "\n").getBytes());
                 output.write("\n".getBytes());
-
+                //load animated 404.html page from jar file
                 BufferedInputStream bufferedInputStream = new BufferedInputStream(
                         getClass()
                             .getResourceAsStream("/404.html")
@@ -108,6 +122,7 @@ class Handler implements Runnable {
                 return;
             }
 
+            //return requested file with Content-Length in the header
             output.write("HTTP/1.1 200 OK\n".getBytes());
             output.write(("Content-Length: " + Files.size(path) + "\n").getBytes());
             output.write("\n".getBytes());
@@ -123,6 +138,7 @@ class Handler implements Runnable {
 
 
         } catch(IOException ex) {
+            //do not handle execptions
         } finally {
             if(!this.client.isClosed()) {
                 try {
