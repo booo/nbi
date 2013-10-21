@@ -12,7 +12,11 @@ class HttpServer implements Runnable {
 
     public static void main(String[] args) throws IOException {
         System.out.println("Starting http server...");
-        Thread httpServer = new Thread(new HttpServer(8080));
+        int port = 80;
+        if(args.length == 1) {
+            port = Integer.parseInt(args[0]);
+        }
+        Thread httpServer = new Thread(new HttpServer(port));
         httpServer.start();
     }
 
