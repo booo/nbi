@@ -89,17 +89,29 @@ class Handler implements Runnable {
                         return;
                     }
 
+            String pathString = firstLine[1];
+            Boolean showHeader = false;
+            //check if we should show the request from the client on the page
+            if(firstLine[1].contains("?")) {
+                String[] parts = firstLine[1].split("\\?");
+                pathString = parts[0];
+                if(parts.length == 2) {
+                    showHeader = parts[1].contains("header=show");
+                }
+            }
+
             //place your documents here
             String DOCUMENT_ROOT = "./testpage/";
 
-            Path path = Paths.get(DOCUMENT_ROOT + firstLine[1]);
-
-            System.out.println("Requested path: " + path);
+            Path path = Paths.get(DOCUMENT_ROOT + pathString);
 
             //if directory is requested change path to default document in this
             //path
+
+            System.out.println(pathString);
+
             if(Files.exists(path) && Files.isDirectory(path)) {
-                path = Paths.get(DOCUMENT_ROOT + firstLine[1] + "/index.html");
+                path = Paths.get(DOCUMENT_ROOT + pathString + "/index.html");
             }
 
             if(!Files.exists(path)) {
@@ -122,10 +134,21 @@ class Handler implements Runnable {
                 return;
             }
 
+            int contentLength = (int) Files.size(path);
+
             //return requested file with Content-Length in the header
             output.write("HTTP/1.1 200 OK\n".getBytes());
-            output.write(("Content-Length: " + Files.size(path) + "\n").getBytes());
+
+            if(showHeader) {
+                contentLength += requestString.getBytes().length;
+            }
+            output.write(("Content-Length: " + contentLength + "\n").getBytes());
             output.write("\n".getBytes());
+
+            //return request header to client
+            if(showHeader) {
+                output.write(requestString.getBytes());
+            }
 
             BufferedInputStream bufferedInputStream = new BufferedInputStream(Files.newInputStream(path));
             int n;
