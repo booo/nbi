@@ -9,3 +9,6 @@ clean:
 
 jar: all
 	jar cfm webserver.jar Manifest.txt *.class 404.html
+
+pdf:
+	pandoc README.md -o README.pdf
